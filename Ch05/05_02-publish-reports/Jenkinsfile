@@ -46,18 +46,29 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            dir("${env.WORKSPACE}/Ch05/05_02-publish-reports"){
-                sh 'venv/bin/coverage xml'
-            }
+post {
+    always {
 
-            junit allowEmptyResults: true, testResults: '**/pytest_junit.xml'
-
-            junit allowEmptyResults: true, testResults: '**/pylint_junit.xml'
-
-            publishCoverage adapters: [cobertura('**/coverage.xml')],
-                sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
+        dir("${env.WORKSPACE}/Ch05/05_02-publish-reports") {
+            sh 'venv/bin/coverage xml'
         }
+
+        junit testResults: '**/pytest_junit.xml', allowEmptyResults: true
+        junit testResults: '**/pylint_junit.xml', allowEmptyResults: true
+
+        cobertura(
+            coberturaReportFile: '**/coverage.xml',
+            autoUpdateHealth: false,
+            autoUpdateStability: false,
+            failNoReports: false
+        )
+
+        publishCoverage(
+            adapters: [
+                coberturaAdapter('**/coverage.xml')
+            ],
+            sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
+        )
     }
 }
+
